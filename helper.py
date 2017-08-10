@@ -226,8 +226,13 @@ class ShowDefinitions(sublime_plugin.EventListener):
                     }
                     p {
                         font-size: 1.05rem;
-                        margin: 0;
+                        margin: 0 0 0 0;
                     }
+
+                    ul{
+                        margin: 10 0 10 0;
+                    }
+
                 </style>
                 <h1>Definition%s:</h1>
                 <p>%s</p>
@@ -250,14 +255,18 @@ def extractInfo(view, locations):
 
     for l in locations:
         view = view.window().find_open_file(l[0])
-        #html = html+'<p>'+str(view.substr(view.line(view.text_point(l[2][0]-1,l[2][1]))))+'</p>'
+        html = html+'<p>'+str(view.substr(view.line(view.text_point(l[2][0]-1,l[2][1]))))+'</p>'
 
     cont = True
     i=1
 
     while cont :        
         temp=str(view.substr(view.line(view.text_point(l[2][0]-1-i,l[2][1]))))
-        if temp[0]=='#':
+        pos = temp.find('#')
+        #htmlTab.append('->'+temp)
+        if 'END FUNCTION' in temp:
+            cont=False
+        elif pos!= -1:
             i=i+1
             if '######' in temp:
                 continue
@@ -265,14 +274,27 @@ def extractInfo(view, locations):
                 continue
             if '-----' in temp:
                 continue
-            htmlTab.append(temp[1:])
+            if '<><><' in temp:
+                continue
+            htmlTab.append(temp[pos+1:])
+        elif len(temp)==0:
+            i=i+1
+        elif 'FUNCTION' in temp:
+            i=i+1
+        #elif 'END FUNCTION' in temp:
+        #    cont=False
         else :
+            #htmlTab.append('->'+str(len(temp))+' -> '+temp)
             cont=False
     htmlTab.reverse()
 
     return html+miseEnForme(htmlTab)
 
-
+#===============================================================================
+# @desc    Met en forme le du javadoc
+# @param   textTab : text a analyser sour forme de liste
+# @return  html    : le code html a afficher
+#===============================================================================
 def miseEnForme(textTab):
     html=''
 
@@ -301,10 +323,12 @@ def miseEnForme(textTab):
         else:
             if   last == '@param' :
                 lastIndex = len(inputParam)-1
-                inputParam[lastIndex]=inputParam[lastIndex]+"<p>"+ligne+"</p>"
+                temp = "<p style='margin-left : 10px;'>"+ligne+"</p>"
+                inputParam[lastIndex]=inputParam[lastIndex]+temp
             elif last == '@return':
                 lastIndex = len(outputParam)-1
-                outputParam[lastIndex]=outputParam[lastIndex]+"<p>"+ligne+"</p>"
+                temp = "<p style='margin-left : 10px;'>"+ligne+"</p>"
+                outputParam[lastIndex]=outputParam[lastIndex]+temp
             elif last == '@desc'  :
                 description.append(ligne)
             else:
@@ -313,16 +337,22 @@ def miseEnForme(textTab):
 
     if len(description):
         html= html+"<p>Description</p>"
-        html= html+"<p>.</p>"
+        html= html+"<ul>"
         html= html+htmlText(description)
-        html= html+"<p>.</p>"
+        html= html+"</ul>"
 
     if len(inputParam):
-        html= html+"<p>Paramètres d'entrées :</p>"
+        if len(inputParam)==1:
+            html= html+"<p>Paramètre d'entrée :</p>"
+        else:
+            html= html+"<p>Paramètres d'entrées :</p>"
         html= html+htmlList(inputParam)
 
     if len(outputParam):
-        html= html+"<p>Paramètres de sorties :</p>"
+        if len(outputParam)==1:
+            html= html+"<p>Paramètre de sortie :</p>"
+        else:
+            html= html+"<p>Paramètres de sorties :</p>"
         html= html+htmlList(outputParam)
 
     if len(other):
@@ -330,6 +360,11 @@ def miseEnForme(textTab):
 
     return html
 
+#===============================================================================
+# @desc    Convertit une liste python en liste a puce HTML
+# @param   liste   : Liste a transformer
+# @return  html    : liste sour forme de code html
+#===============================================================================
 def htmlList(liste):
     html='<ul>'
     for ligne in liste:
@@ -338,6 +373,11 @@ def htmlList(liste):
 
     return html
 
+#===============================================================================
+# @desc    Convertit une liste python en paragraphe HTML
+# @param   liste   : Liste a transformer
+# @return  html    : paragraphe sour forme de code html
+#===============================================================================
 def htmlText(liste):
     html = ''
     for ligne in liste:
