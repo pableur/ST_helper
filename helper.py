@@ -255,7 +255,7 @@ def extractInfo(view, locations):
 
     for l in locations:
         view = view.window().find_open_file(l[0])
-        html = html+'<p>'+str(view.substr(view.line(view.text_point(l[2][0]-1,l[2][1]))))+'</p>'
+        #html = html+'<p>'+str(view.substr(view.line(view.text_point(l[2][0]-1,l[2][1]))))+'</p>'
 
     cont = True
     i=1
@@ -263,7 +263,8 @@ def extractInfo(view, locations):
     while cont :        
         temp=str(view.substr(view.line(view.text_point(l[2][0]-1-i,l[2][1]))))
         pos = temp.find('#')
-        #htmlTab.append('->'+temp)
+        
+        #htmlTab.append(str(pos)+'->'+temp)
         if 'END FUNCTION' in temp:
             cont=False
         elif pos!= -1:
